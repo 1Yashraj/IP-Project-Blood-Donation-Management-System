@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blood Bank Management System</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">🩸</div>
+      <div class="brand-text">Blood<span>Bank</span> MS</div>
+    </div>
+    <ul class="nav-tabs">
+      <li><a href="#" data-page="dashboard"  onclick="showPage('dashboard')">
+        <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a></li>
+      <li><a href="#" data-page="register"   onclick="showPage('register')">
+        <span class="nav-icon">📝</span><span class="nav-label">Register</span></a></li>
+      <li><a href="#" data-page="donate"     onclick="showPage('donate')">
+        <span class="nav-icon">💉</span><span class="nav-label">Donate</span></a></li>
+      <li><a href="#" data-page="request"    onclick="showPage('request')">
+        <span class="nav-icon">🏥</span><span class="nav-label">Request</span></a></li>
+      <li><a href="#" data-page="search"     onclick="showPage('search')">
+        <span class="nav-icon">🔍</span><span class="nav-label">Find Donor</span></a></li>
+      <li><a href="#" data-page="camps"      onclick="showPage('camps')">
+        <span class="nav-icon">🎪</span><span class="nav-label">Camps</span></a></li>
+      <li><a href="#" data-page="admin"      onclick="tryOpenAdmin()">
+        <span class="nav-icon">🛡️</span><span class="nav-label">Admin</span></a></li>
+    </ul>
+    <div class="header-right">
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- ADMIN PASSKEY MODAL                                                    -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="passkeyModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-icon">🔒</div>
+    <h3>Admin Access</h3>
+    <p>Enter the admin passkey to continue.</p>
+    <form onsubmit="verifyPasskey(event)">
+      <input type="password" id="passkeyInput" class="form-input"
+             placeholder="••••••" autocomplete="off" required />
+      <div id="passkeyError" class="error-hint">Incorrect passkey. Try again.</div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closePasskeyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Unlock</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- DONATION CERTIFICATE MODAL                                             -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div id="certModal" class="cert-overlay">
+  <div class="certificate" id="certificateContent">
+    <div class="cert-header">
+      <div class="cert-icon">🩸</div>
+      <h2 id="certQuote" style="font-size:1.35rem;font-weight:800;color:var(--primary);line-height:1.4;margin-bottom:.3rem">—</h2>
+      <p>Blood Bank Management System</p>
+    </div>
+    <div class="cert-body">
+      <p style="color:#64748b;font-size:.88rem">This certifies that</p>
+      <p class="cert-name" id="certName">—</p>
+      <p class="cert-detail" id="certDetail">—</p>
+      <div id="certAppointment" class="cert-appointment" style="display:none;"></div>
+    </div>
+    <div class="cert-footer">
+      <button class="btn btn-primary" onclick="printCertificate()">🖨️ Print</button>
+      <button class="btn btn-outline" onclick="closeCertModal()" style="color:#1a1a2e">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 1 — Dashboard                                                     -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section id="dashboard" class="page">
+  <div class="hero">
+    <div class="hero-inner">
+      <h1>Blood Stock Overview</h1>
+      <p>Real-time inventory across all blood groups. Low-stock groups are highlighted for immediate action.</p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="num" id="totalUnits">—</span>
+          <span class="label">Total Units</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" id="totalGroups">8</span>
+          <span class="label">Blood Groups</span>
+        </div>
+        <div class="hero-stat">
+          <span class="num" id="lowCount">—</span>
+          <span class="label">Low Stock</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="stockGrid" class="stock-grid"></div>
+
+    <div style="margin-top:2.5rem">
+      <div class="section-header"><h2>How It Works</h2></div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-icon">📝</div>
+          <div class="step-title">Register</div>
+          <div class="step-desc">Add a donor with blood group & donation history</div>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">✅</div>
+          <div class="step-title">Verify</div>
+          <div class="step-desc">Auto-checks eligibility on every donation attempt</div>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">💉</div>
+          <div class="step-title">Donate</div>
+          <div class="step-desc">Record donation & stock updates instantly</div>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">🏥</div>
+          <div class="step-title">Request</div>
+          <div class="step-desc">Submit request & stock is deducted if available</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 2 — Register Donor                                                -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section id="register" class="page">
+  <div class="container">
+    <div class="section-header">
+      <h2>📝 Register New Donor</h2>
+      <p>Fill in the donor's details. They'll be added to the system and eligible for future donations.</p>
+    </div>
+    <div class="form-page-layout">
+      <div class="card"><div class="card-body">
+        <form onsubmit="registerDonor(event)">
+          <div class="two-col">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" name="name" class="form-input" required placeholder="e.g. Riya Patel" />
+            </div>
+            <div class="form-group">
+              <label>Age</label>
+              <input type="number" name="age" class="form-input" min="1" max="120" required placeholder="e.g. 25" />
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="form-group">
+              <label>Blood Group</label>
+              <select name="bloodGroup" class="form-select" required>
+                <option value="">— Select —</option>
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" name="phone" class="form-input" required placeholder="e.g. 9876543210" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Last Donation Date <span class="optional">(leave blank if never)</span></label>
+            <input type="date" name="lastDonationDate" class="form-input" />
+          </div>
+          <button type="submit" class="btn btn-primary">Register Donor</button>
+          <div id="registerAlert" class="alert"></div>
+        </form>
+      </div></div>
+
+      <div class="sidebar-info">
+        <h4>💡 Quick Tips</h4>
+        <div class="info-item"><span class="info-icon">📋</span><span>Donors must be <strong>18–65 years old</strong> to be eligible.</span></div>
+        <div class="info-item"><span class="info-icon">🕐</span><span>A minimum <strong>90-day gap</strong> between donations is enforced.</span></div>
+        <div class="info-item"><span class="info-icon">🆔</span><span>Each donor gets a <strong>unique ID</strong> for tracking.</span></div>
+        <div class="info-item"><span class="info-icon">📱</span><span>Phone numbers help recipients connect with donors.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 3 — Donate Blood                                                  -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section id="donate" class="page">
+  <div class="container">
+    <div class="section-header">
+      <h2>💉 Record a Donation</h2>
+      <p>Enter the donor's ID (visible in Admin panel). Eligibility is verified automatically.</p>
+    </div>
+    <div class="form-page-layout">
+      <div class="card"><div class="card-body">
+        <form onsubmit="processDonation(event)">
+          <div class="two-col">
+            <div class="form-group">
+              <label>Donor ID</label>
+              <input type="number" name="donorId" class="form-input" required min="1" placeholder="e.g. 1" />
+            </div>
+            <div class="form-group">
+              <label>Units to Donate</label>
+              <input type="number" name="units" class="form-input" required min="1" max="5" value="1" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Donation</button>
+          <div id="donateAlert" class="alert"></div>
+        </form>
+      </div></div>
+
+      <div class="sidebar-info">
+        <h4>📋 Eligibility Rules</h4>
+        <div class="rules-grid" style="grid-template-columns:1fr">
+          <div class="rule-card"><div class="rule-icon">🎂</div><div class="rule-value">18 – 65</div><div class="rule-label">Age range (years)</div></div>
+          <div class="rule-card"><div class="rule-icon">📅</div><div class="rule-value">90 Days</div><div class="rule-label">Minimum gap between donations</div></div>
+          <div class="rule-card"><div class="rule-icon">🩸</div><div class="rule-value">1 – 5</div><div class="rule-label">Units per donation</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 4 — Request Blood                                                 -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section id="request" class="page">
+  <div class="container">
+    <div class="section-header">
+      <h2>🏥 Request Blood</h2>
+      <p>Submit a request. The system checks stock immediately and fulfils or logs it.</p>
+    </div>
+    <div class="form-page-layout">
+      <div class="card"><div class="card-body">
+        <form onsubmit="submitRequest(event)">
+          <div class="two-col">
+            <div class="form-group">
+              <label>Recipient Name</label>
+              <input type="text" name="recipientName" class="form-input" required placeholder="e.g. Arjun Mehta" />
+            </div>
+            <div class="form-group">
+              <label>Required Blood Group</label>
+              <select name="bloodGroup" class="form-select" required>
+                <option value="">— Select —</option>
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Units Required</label>
+            <input type="number" name="units" class="form-input" required min="1" value="1" />
+          </div>
+          <div class="form-group">
+            <label>Reason / Medical Note <span class="optional">(optional)</span></label>
+            <textarea name="reason" class="form-textarea" placeholder="e.g. Surgery scheduled on 26 Oct"></textarea>
+          </div>
+          <button type="submit" class="btn btn-success">Submit Request</button>
+          <div id="requestAlert" class="alert"></div>
+        </form>
+      </div></div>
+
+      <div class="sidebar-info">
+        <h4>ℹ️ How Requests Work</h4>
+        <div class="info-item"><span class="info-icon">⚡</span><span>If stock is available, it's <strong>instantly fulfilled</strong>.</span></div>
+        <div class="info-item"><span class="info-icon">📝</span><span>If insufficient, the request is <strong>logged as rejected</strong>.</span></div>
+        <div class="info-item"><span class="info-icon">📊</span><span>All requests appear in <strong>Admin panel</strong>.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 5 — Find Donor                                                    -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section id="search" class="page">
+  <div class="container">
+    <div class="section-header">
+      <h2>🔍 Find Donors by Blood Group</h2>
+      <p>Search registered donors matching a specific blood group.</p>
+    </div>
+    <form onsubmit="searchNearby(event)" class="search-form" style="margin-bottom:1.5rem">
+      <select id="searchBG" class="form-select" required style="width:200px">
+        <option value="">— Blood Group —</option>
+        <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+        <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+      </select>
+      <button type="submit" class="btn btn-primary">Search Donors</button>
+    </form>
+    <div id="nearbyResult"></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 6 — Camp / Events                                                 -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section id="camps" class="page">
+  <div class="container">
+    <div class="section-header">
+      <h2>🎪 Blood Donation Camps & Events</h2>
+      <p>View upcoming and past donation drives. Schedule new camps to boost donations.</p>
+    </div>
+
+    <div class="form-page-layout" style="grid-template-columns:1fr 380px">
+      <div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text-primary)">
+          Scheduled Camps
+        </h3>
+        <div id="campsList" class="camp-grid"></div>
+      </div>
+
+      <div class="card"><div class="card-body">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text-primary)">
+          ➕ Schedule a New Camp
+        </h3>
+        <form onsubmit="registerCamp(event)">
+          <div class="form-group">
+            <label>Camp Name</label>
+            <input type="text" name="name" class="form-input" required placeholder="e.g. Annual Blood Drive" />
+          </div>
+          <div class="form-group">
+            <label>Venue</label>
+            <input type="text" name="venue" class="form-input" required placeholder="e.g. City Hospital Hall" />
+          </div>
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" name="date" class="form-input" required />
+          </div>
+          <div class="form-group">
+            <label>Organizer</label>
+            <input type="text" name="organizer" class="form-input" required placeholder="e.g. Red Cross Society" />
+          </div>
+          <button type="submit" class="btn btn-primary">Schedule Camp</button>
+          <div id="campAlert" class="alert"></div>
+        </form>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- PAGE 7 — Admin Panel (Passkey Protected)                               -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<section id="admin" class="page">
+  <div class="container">
+    <div class="section-header">
+      <h2>🛡️ Admin Panel</h2>
+      <p>Full system data, analytics, and management.
+        <a href="#" onclick="lockAdmin();return false;" style="color:var(--primary);font-weight:600;text-decoration:none;">🔒 Lock Panel</a>
+      </p>
+    </div>
+
+    <!-- Admin Sub-Tabs -->
+    <div class="sub-tabs">
+      <button class="active" onclick="showAdminTab('analytics')">📊 Analytics</button>
+      <button onclick="showAdminTab('donors')">👥 Donors</button>
+      <button onclick="showAdminTab('requests')">📋 Requests</button>
+      <button onclick="showAdminTab('history')">📜 Donation History</button>
+    </div>
+
+    <!-- ── Analytics Sub-Tab ──────────────────────────────────────── -->
+    <div id="adminAnalytics" class="sub-page active">
+      <!-- Stat Cards -->
+      <div id="analyticsStats" class="analytics-stats"></div>
+
+      <!-- Charts Row 1 -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h4>🍩 Stock Distribution</h4>
+          <div id="donutChart" class="donut-wrap"></div>
+        </div>
+        <div class="chart-card">
+          <h4>📊 Stock Levels by Group</h4>
+          <div id="stockBarChart"></div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h4>⚡ Donations vs Requests</h4>
+          <div id="comparisonChart"></div>
+        </div>
+        <div class="chart-card">
+          <h4>🏆 Most Requested Groups</h4>
+          <div id="rankingChart"></div>
+        </div>
+      </div>
+
+      <!-- Low-Stock Alerts -->
+      <div class="chart-card" style="margin-bottom:2rem">
+        <h4>⚠️ Low-Stock Alerts</h4>
+        <div id="lowStockAlerts"></div>
+      </div>
+    </div>
+
+    <!-- ── Donors Sub-Tab ─────────────────────────────────────────── -->
+    <div id="adminDonors" class="sub-page">
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>👥 Registered Donors</h3>
+          <div class="filter-bar">
+            <select id="adminBGFilter">
+              <option value="">All Groups</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="loadDonorsTable(document.getElementById('adminBGFilter').value)">Filter</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="donorsTable">
+            <thead><tr>
+              <th>ID</th><th>Name</th><th>Age</th><th>Blood Group</th>
+              <th>Phone</th><th>Last Donation</th><th>Eligible</th><th>Action</th>
+            </tr></thead>
+            <tbody><tr><td colspan="8" style="color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Requests Sub-Tab ───────────────────────────────────────── -->
+    <div id="adminRequests" class="sub-page">
+      <div class="table-card">
+        <div class="table-card-header"><h3>📋 Blood Requests Log</h3></div>
+        <div style="overflow-x:auto">
+          <table id="requestsTable">
+            <thead><tr>
+              <th>ID</th><th>Recipient</th><th>Blood Group</th>
+              <th>Units</th><th>Date</th><th>Status</th>
+            </tr></thead>
+            <tbody><tr><td colspan="6" style="color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Donation History Sub-Tab ────────────────────────────────── -->
+    <div id="adminHistory" class="sub-page">
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>📜 Donation History</h3>
+          <div class="filter-bar">
+            <input type="number" id="historyDonorId" placeholder="Donor ID" min="1"
+                   style="width:100px;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:8px;font-size:.82rem;font-family:inherit;color:var(--text-primary);background:var(--bg-surface-alt)" />
+            <button class="btn btn-primary btn-sm" onclick="loadDonationHistory(document.getElementById('historyDonorId').value)">Filter</button>
+            <button class="btn btn-outline btn-sm" onclick="loadDonationHistory()">All</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="historyTable">
+            <thead><tr>
+              <th>ID</th><th>Donor ID</th><th>Donor Name</th><th>Blood Group</th>
+              <th>Units</th><th>Date</th><th>Certificate</th>
+            </tr></thead>
+            <tbody><tr><td colspan="7" style="color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ──────────────────────────────────────────────────────────── -->
+<footer>
+  Blood Bank Management System &nbsp;•&nbsp; Java (OOP) + HTML/CSS/JS &nbsp;•&nbsp; College Project
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
